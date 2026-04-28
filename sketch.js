@@ -1,50 +1,28 @@
 let cells = []
-let cnv 
 
 const ROWS = 60
 const COLS = 60
-const CELLSIZE = 800 / 60
 
+let CELLSIZE
 let currentValue = 1
+
+let cnv
 let perimeterButton
 
 function setup()
 {
     cnv = createCanvas(800, 800)
+
+    CELLSIZE = width / COLS
+
     createGrid()
 
-   
     perimeterButton = createButton("Fill Perimeter")
-    perimeterButton.position(10, 810)
+    perimeterButton.position(10, height + 10)
     perimeterButton.mousePressed(fillPerimeter)
+
+    // disable right-click menu
     cnv.elt.oncontextmenu = () => false
-}
-
-
-function mousePressed(event)
-{
-    if (event.button === 2) 
-    {
-        paintCell(0)
-        return false
-    }
-    else
-    {
-        paintCell(currentValue)
-    }
-}
-
-function mouseDragged(event)
-{
-    if (event.button === 2)
-    {
-        paintCell(0)
-        return false
-    }
-    else
-    {
-        paintCell(currentValue)
-    }
 }
 
 function createGrid()
@@ -62,6 +40,13 @@ function createGrid()
 function draw()
 {
     background(0)
+    drawCells()
+}
+
+function drawCells()
+{
+    stroke(30)
+    strokeWeight(1)
 
     for (let row = 0; row < ROWS; row++)
     {
@@ -69,30 +54,49 @@ function draw()
         {
             let val = cells[row][col]
 
-            if (val !== 0)
-            {
-                if (val === 1) fill(255, 0, 0)
-                if (val === 2) fill(0, 255, 0)
-                if (val === 3) fill(0, 0, 255)
-                if (val === 4) fill(255, 255, 0)
+            if (val === 0) continue
 
-                rect(col * CELLSIZE, row * CELLSIZE, CELLSIZE, CELLSIZE)
-            }
+            if (val === 1) fill(255)         // brick White
+            if (val === 2) fill(0, 255, 0)   // health Blue
+            if (val === 3) fill(255, 140, 0) // unarmed enemy Orange
+            if (val === 4) fill(255, 0, 0)   // armed enemy Red
+
+            let x = col * CELLSIZE
+            let y = row * CELLSIZE
+
+            rect(x, y, CELLSIZE, CELLSIZE)
         }
     }
+
+    noStroke()
 }
 
-function paintCell(value)
+function mousePressed(event)
+{
+    paint(event)
+}
+
+function mouseDragged(event)
+{
+    paint(event)
+}
+
+function paint(event)
 {
     let col = Math.floor(mouseX / CELLSIZE)
     let row = Math.floor(mouseY / CELLSIZE)
 
-    if (row >= 0 && row < ROWS && col >= 0 && col < COLS)
+    if (row < 0 || row >= ROWS || col < 0 || col >= COLS) return
+
+    if (event.button === 2)
     {
-        cells[row][col] = value
+        cells[row][col] = 0
+    }
+    else
+    {
+        cells[row][col] = currentValue
     }
 }
-
 
 function fillPerimeter()
 {
@@ -111,44 +115,126 @@ function fillPerimeter()
 
 function keyPressed()
 {
+    // select tile 0–4
     if (key >= '0' && key <= '4')
     {
         currentValue = Number(key)
-        console.log("Selected:", currentValue)
     }
 
+    // export
     if (keyCode === 32)
     {
-        let mapString = "const MAP = [\n"
-
-        for (let row = 0; row < ROWS; row++)
-        {
-            let line = "\""
-
-            for (let col = 0; col < COLS; col++)
-            {
-                let val = cells[row][col]
-
-                if (val === 0) line += " " //empty
-                if (val === 1) line += "#" //brick
-                if (val === 2) line += "." // health
-                if (val === 3) line += "+" //unarmed enemy
-                if (val === 4) line += "@" //armed enemy
-            }
-
-            line += "\""
-
-            if (row < ROWS - 1)
-            {
-                line += ","
-            }
-
-            mapString += line + "\n"
-        }
-
-        mapString += "]"
-
-        console.log(mapString)
+        exportLevel()
     }
 }
 
+function exportLevel()
+{
+    let mapString = "const MAP = [\n"
+
+    for (let row = 0; row < ROWS; row++)
+    {
+        let line = "\""
+
+        for (let col = 0; col < COLS; col++)
+        {
+            let val = cells[row][col]
+
+            if (val === 0) line += " "
+            if (val === 1) line += "#"
+            if (val === 2) line += "."
+            if (val === 3) line += "+"
+            if (val === 4) line += "@"
+        }
+
+        line += "\""
+
+        if (row < ROWS - 1) line += ","
+
+        mapString += line + "\n"
+    }
+
+    mapString += "]"
+
+    console.log(mapString)
+}
+
+function loadLevel(map)
+{
+    for (let row = 0; row < ROWS; row++)
+    {
+        for (let col = 0; col < COLS; col++)
+        {
+            let char = map[row][col]
+
+            if (char === " ") cells[row][col] = 0
+            if (char === "#") cells[row][col] = 1
+            if (char === ".") cells[row][col] = 2
+            if (char === "+") cells[row][col] = 3
+            if (char === "@") cells[row][col] = 4
+        }
+    }
+}
+
+const MAP = [
+"############################################################",
+"#            #                              #              #",
+"#            #                              #              #",
+"#            #                              #              #",
+"#            #                              #              #",
+"#                                                          #",
+"#                                                          #",
+"#                      ##############                      #",
+"#                      #            #                      #",
+"#            #         #            #       #              #",
+"#            #         #            #       #              #",
+"#            #         #            #       #              #",
+"#            #         #            #################    ###",
+"#            #         #            #             #        #",
+"#        ###############            #             #        #",
+"#        #             #            #             #        #",
+"#        #             #            #             #        #",
+"#        #             #                          #        #",
+"#        #             #                          #        #",
+"#        #             #                          #        #",
+"#        #             #                                   #",
+"#        #             #            #                      #",
+"#        #             #            #                      #",
+"#        #             #            #                      #",
+"#        #             #       ##############              #",
+"#        #       ########    ###            #     #        #",
+"##    #####    ###             #            #     #        #",
+"#                #             #            #     #        #",
+"#                #             #            #     #        #",
+"#                #             #            #     #        #",
+"#                #                          #     #        #",
+"#                #                          ################",
+"#                #                          #              #",
+"#                #                          #              #",
+"#                #             #            #              #",
+"#         #############    #####            #              #",
+"#         #         #          #            #              #",
+"#         #         #          #            #              #",
+"#                   #          ##################          #",
+"#                   #              #            #          #",
+"#                   #              #            #          #",
+"#                   #              #            #          #",
+"#         #         #              #                       #",
+"#         #         #              #                       #",
+"#         #         #              #                       #",
+"#         #         #              #                       #",
+"#         #         #              #            #          #",
+"###    ##############              #            #          #",
+"#              #    #              #     ##########      ###",
+"#              #    #              #     #                 #",
+"#              #    ##    ##########     #                 #",
+"#              #           #             #                 #",
+"#              #           #             #                 #",
+"#              #                         #                 #",
+"#              #                         #                 #",
+"#              #                         #                 #",
+"#              #                         #                 #",
+"#              #           #             #                 #",
+"#              #           #             #                 #",
+"###     #########################################    #######"
+]
