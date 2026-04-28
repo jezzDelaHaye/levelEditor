@@ -8,6 +8,7 @@ let currentValue = 1
 
 let cnv
 let perimeterButton
+let uiDiv
 
 function setup()
 {
@@ -18,11 +19,42 @@ function setup()
     createGrid()
 
     perimeterButton = createButton("Fill Perimeter")
-    perimeterButton.position(10, height + 10)
+    perimeterButton.position(10, height + 70)
     perimeterButton.mousePressed(fillPerimeter)
 
-    // disable right-click menu
     cnv.elt.oncontextmenu = () => false
+
+    createUI()
+}
+
+function createUI()
+{
+    uiDiv = createDiv()
+    uiDiv.position(10, 10)
+    uiDiv.style("color", "white")
+    uiDiv.style("font-family", "monospace")
+    uiDiv.style("font-size", "14px")
+    uiDiv.style("line-height", "18px")
+
+    uiDiv.html(`
+        <div style="display:flex; gap:12px; flex-wrap:wrap; align-items:center;">
+
+            <div>0 <span style="display:inline-block;width:12px;height:12px;background:#000;border:1px solid #555"></span> empty</div>
+
+            <div>1 <span style="display:inline-block;width:12px;height:12px;background:#ffffff"></span> wall</div>
+
+            <div>2 <span style="display:inline-block;width:12px;height:12px;background:#00ff00"></span> health</div>
+
+            <div>3 <span style="display:inline-block;width:12px;height:12px;background:#ff8c00"></span> enemy</div>
+
+            <div>4 <span style="display:inline-block;width:12px;height:12px;background:#ff0000"></span> enemy</div>
+
+            <div>5 <span style="display:inline-block;width:12px;height:12px;background:#00aaff"></span> spawn</div>
+
+            <div>6 <span style="display:inline-block;width:12px;height:12px;background:#ffff00"></span> end</div>
+
+        </div>
+    `)
 }
 
 function createGrid()
@@ -46,7 +78,6 @@ function draw()
 function drawCells()
 {
     stroke(30)
-    strokeWeight(1)
 
     for (let row = 0; row < ROWS; row++)
     {
@@ -54,15 +85,17 @@ function drawCells()
         {
             let val = cells[row][col]
 
-            if (val === 0) continue
-
-            if (val === 1) fill(255)         // brick White
-            if (val === 2) fill(0, 255, 0)   // health Blue
-            if (val === 3) fill(255, 140, 0) // unarmed enemy Orange
-            if (val === 4) fill(255, 0, 0)   // armed enemy Red
-
             let x = col * CELLSIZE
             let y = row * CELLSIZE
+
+            if (val === 1) fill(255)
+            else if (val === 2) fill(0, 255, 0)
+            else if (val === 3) fill(255, 140, 0)
+            else if (val === 4) fill(255, 0, 0)
+            else if (val === 5) fill(0, 150, 255)
+            else if (val === 6) fill(255, 255, 0)
+                
+            else fill(0)
 
             rect(x, y, CELLSIZE, CELLSIZE)
         }
@@ -115,13 +148,11 @@ function fillPerimeter()
 
 function keyPressed()
 {
-    // select tile 0–4
-    if (key >= '0' && key <= '4')
+    if (key >= '0' && key <= '6')
     {
         currentValue = Number(key)
     }
 
-    // export
     if (keyCode === 32)
     {
         exportLevel()
@@ -145,10 +176,11 @@ function exportLevel()
             if (val === 2) line += "."
             if (val === 3) line += "+"
             if (val === 4) line += "@"
+            if (val === 5) line += "^"
+            if (val === 6) line += "$"
         }
 
         line += "\""
-
         if (row < ROWS - 1) line += ","
 
         mapString += line + "\n"
@@ -172,69 +204,71 @@ function loadLevel(map)
             if (char === ".") cells[row][col] = 2
             if (char === "+") cells[row][col] = 3
             if (char === "@") cells[row][col] = 4
+            if (char === "^") cells[row][col] = 5
+            if (char === "$") cells[row][col] = 6
         }
     }
 }
 
 const MAP = [
 "############################################################",
-"#            #                              #              #",
-"#            #                              #              #",
-"#            #                              #              #",
-"#            #                              #              #",
+"#                                              #           #",
+"                                               #           #",
+"                                                           #",
+"                                                           #",
+"                     #############                         #",
+"#########            #           #                         #",
+"#       #            #           #                         #",
+"#       #            #           #                         #",
+"#       ##############           #             #######     #",
+"#       #                        ######   #    #     #     #",
+"#       #                        #        #    #     #     #",
+"#       #                        #        #    #           #",
+"#       #                  #######        #    #           #",
+"        #    #########     #              #    #           #",
+"        #            #     #              #    #           #",
+"        #            #     #              #    #     #     #",
+"        #            #     #              #    #     #     #",
+"#       #            #     #     ##########    #     #     #",
+"#    ####            #     #              #    #     #######",
+"#    #               #     #              #    #     #     #",
+"#    #               #     #              #    #     #     #",
+"#    #               #     #              #    #     #     #",
+"#    #               #     #              #    #     #     #",
+"#    #               #     #              #    #     #     #",
+"#    #               #     ################    #######     #",
+"#    #               #     #                   #     #     #",
+"#    ############    #     #                   #           #",
+"#               #    #     #                   #           #",
+"#               #    #     #                   #           #",
+"#               #    #     #        #          #           #",
+"#               #    #     #        #          #     #     #",
+"#               #    #     #        #          #     #     #",
+"############    #    #     #        #          #     #     #",
+"#               #    #     #        #          #     #     #",
+"#               #    #     #        #          #     #     #",
+"#               #    #     #        #          #     #     #",
+"#               #    #     #    ##########     #     #######",
+"#               #    #     #             #     #           #",
+"#               #    #     #             #     #           #",
+"#               #    #     #             #     #           #",
+"#               #    #     ###############     #           #",
+"#    ############    #                         #           #",
+"#       #            #                         #     #     #",
+"#       #            #                         #     #     #",
+"#       #            #                         #     #     #",
+"#       #            #                         #     #     #",
+"#       #    ###################################     #     #",
+"#       #                                            #     #",
+"#       #                                            #     #",
+"#       #                                            #     #",
+"#       #                                            #     #",
+"####    #    #       #################################     #",
+"#       #    #       #                    #                #",
+"#       ##############                    #                #",
 "#                                                          #",
 "#                                                          #",
-"#                      ##############                      #",
-"#                      #            #                      #",
-"#            #         #            #       #              #",
-"#            #         #            #       #              #",
-"#            #         #            #       #              #",
-"#            #         #            #################    ###",
-"#            #         #            #             #        #",
-"#        ###############            #             #        #",
-"#        #             #            #             #        #",
-"#        #             #            #             #        #",
-"#        #             #                          #        #",
-"#        #             #                          #        #",
-"#        #             #                          #        #",
-"#        #             #                                   #",
-"#        #             #            #                      #",
-"#        #             #            #                      #",
-"#        #             #            #                      #",
-"#        #             #       ##############              #",
-"#        #       ########    ###            #     #        #",
-"##    #####    ###             #            #     #        #",
-"#                #             #            #     #        #",
-"#                #             #            #     #        #",
-"#                #             #            #     #        #",
-"#                #                          #     #        #",
-"#                #                          ################",
-"#                #                          #              #",
-"#                #                          #              #",
-"#                #             #            #              #",
-"#         #############    #####            #              #",
-"#         #         #          #            #              #",
-"#         #         #          #            #              #",
-"#                   #          ##################          #",
-"#                   #              #            #          #",
-"#                   #              #            #          #",
-"#                   #              #            #          #",
-"#         #         #              #                       #",
-"#         #         #              #                       #",
-"#         #         #              #                       #",
-"#         #         #              #                       #",
-"#         #         #              #            #          #",
-"###    ##############              #            #          #",
-"#              #    #              #     ##########      ###",
-"#              #    #              #     #                 #",
-"#              #    ##    ##########     #                 #",
-"#              #           #             #                 #",
-"#              #           #             #                 #",
-"#              #                         #                 #",
-"#              #                         #                 #",
-"#              #                         #                 #",
-"#              #                         #                 #",
-"#              #           #             #                 #",
-"#              #           #             #                 #",
-"###     #########################################    #######"
+"#                                  #             #         #",
+"#                                  #             #         #",
+"############################################################"
 ]
